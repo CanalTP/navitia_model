@@ -786,7 +786,10 @@ impl FromStr for Time {
         };
         let hours: u32 = hours.parse()?;
         let minutes: u32 = minutes.parse()?;
-        let seconds: u32 = seconds.parse()?;
+        let seconds: u32 = match seconds.split('.').next() {
+            Some(seconds) => seconds.parse()?,
+            _ => return Err(TimeError::WrongValue),
+        };
         if minutes > 59 || seconds > 59 {
             return Err(TimeError::WrongValue);
         }
@@ -1926,9 +1929,11 @@ mod tests {
         assert_eq!(Time::new(13, 37, 0), de("13:37:00").unwrap());
         assert_eq!(Time::new(0, 0, 0), de("0:0:0").unwrap());
         assert_eq!(Time::new(25, 42, 42), de("25:42:42").unwrap());
+        assert_eq!(Time::new(13, 37, 0), de("13:37:00.000").unwrap());
 
         assert!(de("").is_err());
         assert!(de("13:37").is_err());
+        assert!(de("13:37:").is_err());
         assert!(de("AA:00:00").is_err());
         assert!(de("00:AA:00").is_err());
         assert!(de("00:00:AA").is_err());
